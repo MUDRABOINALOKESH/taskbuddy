@@ -98,15 +98,21 @@ export default function App() {
       .then((result) => setTasks(result.tasks))
       .catch((err) => {
         setError(err.message)
-        if (err.message === 'Please sign in again.') signOut()
+        if (err.message === 'Please sign in again.') {
+          localStorage.removeItem(SESSION_KEY)
+          setSession(null)
+          setTasks([])
+        }
       })
       .finally(() => setLoading(false))
   }, [session])
 
   function signOut() {
+    const token = session?.token
     localStorage.removeItem(SESSION_KEY)
     setSession(null)
     setTasks([])
+    if (token) request('/auth/logout', { token, method: 'POST' }).catch(() => {})
   }
 
   function signIn(result) {

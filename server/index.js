@@ -102,6 +102,16 @@ async function handle(request, response) {
     return send(response, 200, await issueSession(database, user))
   }
 
+  if (request.method === 'POST' && route === '/api/auth/logout') {
+    const token = request.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
+    if (token) {
+      const tokenHash = createHash('sha256').update(token).digest('hex')
+      database.sessions = database.sessions.filter((session) => session.tokenHash !== tokenHash)
+      await writeDatabase(database)
+    }
+    return send(response, 200, { success: true })
+  }
+
   if (!route.startsWith('/api/')) return send(response, 404, { error: 'Not found.' })
   const user = await authenticatedUser(request, database)
   if (!user) return send(response, 401, { error: 'Please sign in again.' })
